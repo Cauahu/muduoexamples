@@ -17,7 +17,7 @@ clean:
 	rm -f echo core
 server: $(SRC)/echo.cc  $(SRC)/main.cc
 	g++ $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-client: $(SRC)/client.cc $(SRC)/echoClient.cc
+client: $(SRC)/echoclientwithnochannel.cc 
 	g++ $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 .PHONY: all clean

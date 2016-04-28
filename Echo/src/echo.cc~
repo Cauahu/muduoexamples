@@ -27,11 +27,6 @@ void EchoServer::onConnection(const muduo::net::TcpConnectionPtr& conn)
   LOG_INFO << "EchoServer - " << conn->peerAddress().toIpPort() << " -> "
            << conn->localAddress().toIpPort() << " is "
            << (conn->connected() ? "UP" : "DOWN");
-  if(conn->connected())
-  {
-	  muduo::string msg("EchoServer connect established!");
-	  conn->send(msg);
-  }
 }
 
 void EchoServer::onMessage(const muduo::net::TcpConnectionPtr& conn,
