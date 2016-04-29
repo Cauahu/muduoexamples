@@ -1,5 +1,6 @@
 #include <muduo/base/Logging.h>
 #include <muduo/base/Mutex.h>
+#include <muduo/net/EventLoopThread.h>
 #include <muduo/net/EventLoop.h>
 #include <muduo/net/TcpClient.h>
 #include <muduo/net/Buffer.h>
@@ -9,6 +10,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace muduo;
 using namespace muduo::net;
@@ -19,6 +21,7 @@ class EchoClient : boost::noncopyable
 		EchoClient(EventLoop* loop, const InetAddress& serverAddr)
 			:client_(loop, serverAddr, "EchoClient")
 		{
+			LOG_INFO << "run EchoClient class";
 			client_.setConnectionCallback(boost::bind(&EchoClient::onConnection, this, _1));
 			client_.setMessageCallback(boost::bind(&EchoClient::onMessage, this, _1, _2, _3));
 			client_.enableRetry();
@@ -64,29 +67,39 @@ class EchoClient : boost::noncopyable
 				Timestamp)
 		{
 			muduo::string message(buf->retrieveAllAsString());
-			LOG_INFO << message;
+			printf("<<<%s\n", message.c_str());
+			char s[10];
+			itoa(num, s, 10);
+			message += s;
+			if(num++ < 5 )
+				connection_->send(message);
 		}
 
 
 		TcpClient client_;
 		TcpConnectionPtr connection_;
 		MutexLock mutex_;
+		static int num;
 };
+
+int EchoClient::num = 0;
 
 int main()
 {
+	//EventLoopThread loopThread;
 	EventLoop loop;
 	InetAddress serverAddr("127.0.0.1", 2007);
 
 	EchoClient client(&loop, serverAddr);
 	client.connect();
-	std::string line;
+	loop.loop();
+	/*std::string line;
 	while(std::getline(std::cin,line))
 	{
 		std::cout << line << std::endl;
 		client.write(line);
-	}
+	}*/
 	client.disconnect();
-
+	//CurrentThread::sleepUsec(1000*1000);
 }
 
