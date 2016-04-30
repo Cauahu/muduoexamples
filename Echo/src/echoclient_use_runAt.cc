@@ -15,6 +15,8 @@
 using namespace muduo;
 using namespace muduo::net;
 
+TcpConnectionPtr Conn;
+
 class EchoClient : boost::noncopyable
 {
 	public :
@@ -36,15 +38,7 @@ class EchoClient : boost::noncopyable
 			client_.disconnect();
 		}
 		
-		void write(const StringPiece& message)
-		{
-			MutexLockGuard lock(mutex_);
-			if(connection_)
-			{
-				connection_->send(message);
-			}
-		}
-
+		
 	private :
 		void onConnection(const TcpConnectionPtr& conn)
 		{
@@ -55,10 +49,12 @@ class EchoClient : boost::noncopyable
 			if(conn->connected())
 			{
 				connection_ = conn;
+				Conn = conn;
 			}
 			else
 			{
 				connection_.reset();
+				Conn.reset();
 			}
 		}
 
@@ -68,21 +64,23 @@ class EchoClient : boost::noncopyable
 		{
 			muduo::string message(buf->retrieveAllAsString());
 			printf("<<<%s\n", message.c_str());
-			char s[10];
-			itoa(num, s, 10);
-			message += s;
-			if(num++ < 5 )
-				connection_->send(message);
 		}
 
 
 		TcpClient client_;
 		TcpConnectionPtr connection_;
 		MutexLock mutex_;
-		static int num;
 };
 
-int EchoClient::num = 0;
+
+void write()
+{
+	if(Conn)
+	{
+		Conn->send("huzhuang");
+	}
+}
+
 
 int main()
 {
@@ -92,6 +90,7 @@ int main()
 
 	EchoClient client(&loop, serverAddr);
 	client.connect();
+	loop.runEvery(1, boost::bind(write));
 	loop.loop();
 	/*std::string line;
 	while(std::getline(std::cin,line))
